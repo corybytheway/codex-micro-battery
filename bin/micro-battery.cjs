@@ -35,9 +35,9 @@ function requireInputClosed() {
   const result = cp.spawnSync('/bin/ps', ['-axo', 'comm='], {encoding: 'utf8'});
   if (/\/input\.app\/Contents\/MacOS\/input\s*$/im.test(result.stdout || '')) throw new Error('Quit Input from its application menu, then run installation again. This prevents its cached configuration from overwriting the change.');
 }
-function percentage(value, label, {allowEnds = true} = {}) {
+function percentage(value, label) {
   const number = Number(value);
-  if (!Number.isFinite(number) || number < 0 || number > 100 || !allowEnds && (number === 0 || number === 100)) throw new Error(label + ' must be ' + (allowEnds ? '0–100' : 'greater than 0 and less than 100') + '.');
+  if (!Number.isFinite(number) || number < 0 || number > 100) throw new Error(label + ' must be 0–100.');
   return number / 100;
 }
 async function main(argv = process.argv.slice(2)) {
@@ -46,12 +46,12 @@ async function main(argv = process.argv.slice(2)) {
   if (flags.version) {console.log(packageInfo.version); return;}
   const paths = pathsFor(flags['data-dir']);
   if (command === 'help') {
-    console.log(`Micro Battery ${packageInfo.version} — unofficial Codex Micro battery lights\n\nCommands:\n  install [--yes] [--profile ID] [--dry-run]\n  status\n  start | stop\n  configure [--dim 50] [--underglow inherit|white|off] [--brightness 100]\n  uninstall [--yes] [--dry-run]\n  preview [PERCENT]\n\nHardware commands require macOS, Node 22+, Work Louder Input, and a connected Micro.\nAll commands accept --data-dir PATH. Install accepts --input-app PATH.\n`); return;
+    console.log(`Micro Battery ${packageInfo.version} — unofficial Codex Micro battery lights\n\nCommands:\n  install [--yes] [--profile ID] [--dry-run]\n  status\n  start | stop\n  configure [--underglow inherit|white|off] [--brightness 100]\n  uninstall [--yes] [--dry-run]\n  preview [PERCENT]\n\nBattery-light brightness follows the remaining charge in each segment.\nHardware commands require macOS, Node 22+, Work Louder Input, and a connected Micro.\nAll commands accept --data-dir PATH. Install accepts --input-app PATH.\n`); return;
   }
   if (command === 'preview') {
     const frame = batteryFrame(Number(positional[1] ?? 75));
-    const dot = value => value === 1 ? '●' : value === 0 ? '○' : '◐';
-    console.log(`${frame.percent}% · ${frame.colorName}\n      ${frame.levels.slice(0, 2).map(e => dot(e.b)).join('  ')}\n${frame.levels.slice(2).map(e => dot(e.b)).join('  ')}\n\nBottom row empties right to left; top-left stays on last.`); return;
+    const label = entry => String(Math.round(entry.b * 100)).padStart(3) + '%';
+    console.log(`${frame.percent}% battery · ${frame.colorName}\n        ${frame.levels.slice(0, 2).map(label).join('  ')}\n${frame.levels.slice(2).map(label).join('  ')}\n\nValues show each light’s brightness. Bottom row empties right to left; top-left stays on last.`); return;
   }
   requireMac();
   const agent = control(paths);
@@ -66,18 +66,17 @@ async function main(argv = process.argv.slice(2)) {
   if (command === 'stop') {agent.stop({disable: true}); console.log('Stopped; login startup is disabled.'); return;}
   if (command === 'configure') {
     const value = JSON.parse(fs.readFileSync(paths.settings));
-    if (flags.dim !== undefined) value.dimBrightness = percentage(flags.dim, 'Dim brightness', {allowEnds: false});
+    if (flags.dim !== undefined) throw new Error('Battery lights now fade proportionally to charge. The fixed --dim setting is no longer used.');
+    delete value.dimBrightness;
     if (flags.underglow !== undefined) {
       if (!['white', 'off', 'inherit'].includes(flags.underglow)) throw new Error('Underglow must be white, off, or inherit.');
       value.underglow.mode = flags.underglow;
       value.underglow.color = '#FFFFFF';
     }
     if (flags.brightness !== undefined) value.underglow.brightness = percentage(flags.brightness, 'Underglow brightness');
-    if (flags.dim === undefined && flags.underglow === undefined && flags.brightness === undefined) {
+    if (flags.underglow === undefined && flags.brightness === undefined) {
       const prompt = readline.createInterface({input: process.stdin, output: process.stdout});
       try {
-        const dim = (await prompt.question(`Dim light brightness (1–99%) [${Math.round(value.dimBrightness * 100)}]: `)).trim();
-        if (dim) value.dimBrightness = percentage(dim, 'Dim brightness', {allowEnds: false});
         const mode = (await prompt.question(`Underglow: inherit, white, or off [${value.underglow.mode}]; white/off are experimental: `)).trim();
         if (mode && !['inherit', 'white', 'off'].includes(mode)) throw new Error('Choose inherit, white, or off.');
         if (mode) value.underglow.mode = mode;

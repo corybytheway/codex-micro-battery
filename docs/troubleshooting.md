@@ -8,7 +8,9 @@ Author: Cory McCabe
 
 **Gauge stays on an old reading:** the service needs an awake, connected Mac. Check `Status.command`. `connected: false` means it is waiting to reconnect, not that the old light state is a fresh battery measurement. Stop and Start restart the helper without editing the device keymap.
 
-**Input's Battery-layer editor is hidden:** expected for vendor Agent assignments. Use Configure.command for dim brightness and experimental ambient preferences. The native Codex layer and other custom layers remain managed by their usual apps.
+**Input's Battery-layer editor is hidden:** expected for vendor Agent assignments. Battery-light brightness follows the remaining charge automatically. Use Configure.command for experimental ambient preferences. The native Codex layer and other custom layers remain managed by their usual apps.
+
+**Old dim setting:** beta 2 uses proportional brightness throughout each light's range. Existing `dimBrightness` fields are ignored, and `--dim` reports that the old fixed step has been replaced.
 
 **Six layers / no spare channels:** the installer leaves the device unchanged. Free a layer yourself in Input or remove another custom Agent-light integration before retrying. Existing populated layers are never silently reused.
 

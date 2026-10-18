@@ -1,0 +1,21 @@
+{
+  "author": "Cory McCabe",
+  "version": "0.1.0-beta.2",
+  "testedAt": "2026-10-18T01:45:47.999Z",
+  "firmware": "0.6.3",
+  "proportionalBrightnessAcknowledgments": [
+    {
+      "simulatedBattery": 70,
+      "activeLightBrightness": 20,
+      "acknowledged": true
+    },
+    {
+      "simulatedBattery": 80,
+      "activeLightBrightness": 80,
+      "acknowledged": true
+    }
+  ],
+  "actualBatteryRestored": true,
+  "keymapUnchanged": true,
+  "physicalBrightnessConfirmation": false
+}

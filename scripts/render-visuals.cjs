@@ -13,7 +13,7 @@ const output = process.argv[2];
 if (!output) throw new Error('Pass a temporary output directory for animation frames.');
 fs.mkdirSync(output, {recursive: true});
 const photo = fs.readFileSync(path.join(root, 'docs/assets/codex-micro-official.png')).toString('base64');
-const percentages = [100, 92, 91, 84, 83, 76, 75, 67, 66, 59, 58, 51, 50, 42, 41, 34, 33, 26, 25, 17, 16, 9, 8, 1, 0];
+const percentages = [100, 92, 91, 84, 83, 80, 76, 75, 70, 67, 66, 59, 58, 51, 50, 42, 41, 34, 33, 26, 25, 17, 16, 9, 8, 1, 0];
 // Coordinates on a 1600 x 1600 rendering of the supplied 1653px official image.
 const positions = [[750, 450], [949, 426], [480, 646], [675, 611], [875, 584], [1072, 545]];
 const palette = {green: '#14985b', orange: '#ce7608', red: '#d64040'};
@@ -24,8 +24,9 @@ function device(state, x, y, size) {
     state.levels.map((entry, i) => {
       const [cx, cy] = positions[i];
       const lit = entry.b > 0;
-      return `<circle cx="${cx}" cy="${cy}" r="48" fill="${lit ? color : '#f6f7f4'}" fill-opacity="${entry.b === 0.5 ? 0.56 : 1}" stroke="${lit ? color : '#7e8984'}" stroke-width="4"/>` +
-        text(cx, cy + 15, 44, entry.b === 1 ? '1' : entry.b ? '½' : '–', `text-anchor="middle" fill="${lit ? '#ffffff' : '#57665d'}" font-weight="700"`);
+      const label = lit ? Math.round(entry.b * 100) + '%' : '–';
+      return `<circle cx="${cx}" cy="${cy}" r="48" fill="${lit ? color : '#f6f7f4'}" fill-opacity="${lit ? 0.15 + 0.85 * entry.b : 1}" stroke="${lit ? color : '#7e8984'}" stroke-width="4"/>` +
+        text(cx, cy + 11, lit ? 28 : 40, label, `text-anchor="middle" fill="${entry.b >= 0.4 ? '#ffffff' : '#263a2e'}" font-weight="700"`);
     }).join('') + '</g>';
 }
 function svg(state) {
@@ -40,7 +41,7 @@ function svg(state) {
     text(785, 338, 20, 'Then top-right. Top-left last.') +
     text(785, 408, 20, 'Two full lights stay orange.') +
     text(785, 446, 20, 'One-and-a-half or less: red.') +
-    text(785, 523, 18, '1 full · ½ half bright · – off', 'fill="#536359"') +
+    text(785, 523, 18, 'Each label shows LED brightness.', 'fill="#536359"') +
     text(55, 624, 14, 'Official image: OpenAI × Work Louder · Superimposed states, not a photograph of the running helper', 'fill="#69786f"');
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><rect width="${w}" height="${h}" fill="#f6f7f4"/><g font-family="Arial, Helvetica, sans-serif" fill="#1b3023">${body}</g></svg>`;
 }

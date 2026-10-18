@@ -59,11 +59,11 @@ test('service refuses channel collisions without pushing lighting',async t=>{
   await assert.rejects(runService(paths,{once:true,deviceFactory:()=>device,onEvent:()=>{}}),/another layer/);
   assert.ok(!device.calls.some(c=>c.method.startsWith('v.oai.')));assert.ok(!fs.existsSync(paths.lock));
 });
-test('settings can be changed without Input, while underglow writes remain layer-scoped',async t=>{
+test('legacy dim settings do not override proportional brightness; ambient updates stay layer-scoped',async t=>{
   const {paths,agent}=setup(t),device=new FakeDevice();install({device,paths,source,plan:prepare(device),agent});
-  const preferences=JSON.parse(fs.readFileSync(paths.settings));preferences.dimBrightness=.3;preferences.underglow.mode='white';atomicJson(paths.settings,preferences);
+  const preferences=JSON.parse(fs.readFileSync(paths.settings));preferences.dimBrightness=.3;preferences.underglow.mode='white';device.statusValue.battery=80;atomicJson(paths.settings,preferences);
   const result=await runService(paths,{once:true,deviceFactory:()=>device,onEvent:()=>{}});
-  assert.equal(result.levels[4],.3);assert.equal(result.underglowRequested,true);
+  assert.ok(Math.abs(result.levels[4]-.8)<1e-10);assert.equal(result.underglowRequested,true);
   const ambient=device.calls.find(c=>c.method==='v.oai.rgbcfg');assert.deepEqual(Object.keys(ambient.params),['ambient']);
   device.statusValue.layer_index=1;device.calls=[];await runService(paths,{once:true,deviceFactory:()=>device,onEvent:()=>{}});assert.ok(!device.calls.some(c=>c.method==='v.oai.rgbcfg'));
 });
