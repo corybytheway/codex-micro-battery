@@ -28,20 +28,10 @@ function device(state, x, y, size) {
         text(cx, cy + 15, 44, entry.b === 1 ? '1' : entry.b ? '½' : '–', `text-anchor="middle" fill="${lit ? '#ffffff' : '#57665d'}" font-weight="700"`);
     }).join('') + '</g>';
 }
-function svg(state, cover = false) {
-  const w = cover ? 1600 : 1200, h = cover ? 900 : 650;
+function svg(state) {
+  const w = 1200, h = 650;
   const color = palette[state.colorName];
-  const body = cover ?
-    text(80, 92, 20, 'CODEX MICRO / BATTERY LAYER', 'letter-spacing="2" fill="#536359"') +
-    text(80, 250, 74, 'Six lights.', 'font-weight="700"') +
-    text(80, 338, 74, 'One clear reading.', 'font-weight="700"') +
-    text(80, 505, 118, '75%', `font-weight="700" fill="${color}"`) +
-    text(85, 557, 25, 'Four full · one half · one off', 'fill="#46584b"') +
-    text(85, 650, 24, 'Bottom row empties right to left.') +
-    text(85, 689, 24, 'Top-left stays on last.') +
-    text(85, 780, 19, '1 = full · ½ = half bright · – = off', 'fill="#536359"') +
-    device(state, 620, 80, 920) +
-    text(80, 864, 16, 'Official product image: OpenAI × Work Louder · Battery states superimposed', 'fill="#69786f"') :
+  const body =
     text(55, 55, 19, 'THE BATTERY LAYER', 'letter-spacing="2" fill="#536359"') +
     device(state, 5, 0, 720) +
     text(780, 170, 88, state.percent + '%', 'font-weight="700"') +
@@ -58,11 +48,10 @@ function render(source, file) {
   const renderer = new Resvg(source, {font: {loadSystemFonts: true, defaultFontFamily: 'Arial'}});
   fs.writeFileSync(file, renderer.render().asPng());
 }
-render(svg(batteryFrame(75), true), path.join(root, 'docs/assets/hero.png'));
 const manifest = percentages.map((percent, i) => {
   const file = path.join(output, String(i).padStart(2, '0') + '.png');
   render(svg(batteryFrame(percent)), file);
   return {file, percent, duration: [100, 75, 50, 33, 25, 8, 0].includes(percent) ? 1400 : 420};
 });
 fs.writeFileSync(path.join(output, 'frames.json'), JSON.stringify(manifest));
-console.log('Rendered official-image cover and ' + manifest.length + ' exact battery-state frames.');
+console.log('Rendered ' + manifest.length + ' exact battery-state frames.');

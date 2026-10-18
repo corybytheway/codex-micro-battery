@@ -1,6 +1,6 @@
-<p align="center"><img src="docs/assets/hero.png" alt="Official Codex Micro product image with a 75% battery overlay: four full, one half, one off" width="100%"></p>
+<p align="center"><img src="docs/assets/header-battery.png" alt="Codex Micro showing a 75% battery display: four bright green lights, one dim green light, and one off" width="560"></p>
 
-# Micro Battery
+# Codex Micro Battery Display
 
 **Six lights. One clear reading.**
 
@@ -12,7 +12,7 @@ An unofficial macOS companion that turns a dedicated layer on your Work Louder C
 
 ![Animated explanation of the battery gauge](docs/assets/battery-sequence.gif)
 
-Official product image: [OpenAI × Work Louder](https://openai.com/supply/co-lab/work-louder/). Battery indicators are superimposed annotations. [Image credit and source](THIRD_PARTY_NOTICES.md).
+Product imagery: [OpenAI × Work Louder](https://openai.com/supply/co-lab/work-louder/). The header visualizes the battery lights; the animation uses superimposed indicators. [Image credit and source](THIRD_PARTY_NOTICES.md).
 
 ## Install
 

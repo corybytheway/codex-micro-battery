@@ -8,4 +8,8 @@ Documentation and overlays by Cory McCabe.
 
 Credit: OpenAI / Work Louder. The original product image and product marks remain the property of their respective owners and are excluded from this repository's MIT software license. This repository does not grant a separate license to those materials.
 
-The README cover and animation place clearly identified battery-state annotations over that unchanged image. They illustrate the independent companion's behavior and do not imply endorsement or show the helper running on photographed hardware.
+The animation places battery-state annotations over that unchanged image.
+
+`docs/assets/header-battery.png` is the user-supplied header, an AI-assisted LED lighting edit based on the [official top-down product image](https://images.ctfassets.net/kftzwdyauwt9/2adyxMHmaeZ8uJS8QOOsv8/768a77ee980c833d56fd830bfd5d3299/Codex-micro-overview-white.png) from the same OpenAI × Work Louder page. Credit for the underlying product image: OpenAI / Work Louder; it is also excluded from the MIT software license.
+
+Both visuals illustrate the independent companion's behavior and do not imply endorsement or show the helper running on photographed hardware.
