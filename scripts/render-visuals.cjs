@@ -24,7 +24,7 @@ function device(state, x, y, size) {
     state.levels.map((entry, i) => {
       const [cx, cy] = positions[i];
       const lit = entry.b > 0;
-      return `<circle cx="${cx}" cy="${cy}" r="48" fill="${lit ? color : '#f6f7f4'}" fill-opacity="${entry.b === 0.5 ? 0.56 : 0.94}" stroke="${lit ? color : '#7e8984'}" stroke-width="4"/>` +
+      return `<circle cx="${cx}" cy="${cy}" r="48" fill="${lit ? color : '#f6f7f4'}" fill-opacity="${entry.b === 0.5 ? 0.56 : 1}" stroke="${lit ? color : '#7e8984'}" stroke-width="4"/>` +
         text(cx, cy + 15, 44, entry.b === 1 ? '1' : entry.b ? '½' : '–', `text-anchor="middle" fill="${lit ? '#ffffff' : '#57665d'}" font-weight="700"`);
     }).join('') + '</g>';
 }
