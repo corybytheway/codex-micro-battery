@@ -1,0 +1,13 @@
+{
+  "author": "Cory McCabe",
+  "testedAt": "2026-10-17T23:49:52.453Z",
+  "firmware": "0.6.3",
+  "platform": "darwin",
+  "architecture": "arm64",
+  "temporaryInstallReadback": true,
+  "copiedLoginRuntimeRan": true,
+  "batteryReadAndLightAcknowledged": true,
+  "uninstallReadback": true,
+  "originalConfigurationRestored": true,
+  "underglowPhysicalConfirmation": false
+}

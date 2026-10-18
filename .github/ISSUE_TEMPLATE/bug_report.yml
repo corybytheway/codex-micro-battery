@@ -1,0 +1,29 @@
+name: Hardware or installation issue
+description: Report a battery-gauge or setup problem without sharing private keymaps.
+body:
+  - type: markdown
+    attributes:
+      value: Please omit serial numbers, full device backups, private shortcuts, and personal file paths.
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: macOS, Node, Input, firmware, and Apple Silicon or Intel.
+    validations:
+      required: true
+  - type: dropdown
+    id: connection
+    attributes:
+      label: Connection
+      options:
+        - USB
+        - Bluetooth
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: What happened?
+      description: Include the command, expected result, and what you physically saw on the lights. An ACK alone does not confirm a visible change.
+    validations:
+      required: true

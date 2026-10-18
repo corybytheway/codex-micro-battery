@@ -1,0 +1,17 @@
+.DS_Store
+node_modules/
+dist/
+coverage/
+__pycache__/
+*.log
+*.lock
+.env*
+.local/
+backups/
+last-status.json
+underglow-status.json
+state.json
+settings.json
+*.node
+*.bin
+*.asar

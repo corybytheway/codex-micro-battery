@@ -1,0 +1,16 @@
+{
+  "name": "codex-micro-battery",
+  "version": "0.1.0-beta.1",
+  "description": "An unofficial six-light battery gauge for the Work Louder Codex Micro.",
+  "author": "Cory McCabe",
+  "license": "MIT",
+  "private": true,
+  "engines": { "node": ">=22" },
+  "bin": { "micro-battery": "bin/micro-battery.cjs" },
+  "scripts": {
+    "test": "node --test test/*.test.cjs",
+    "preview": "node bin/micro-battery.cjs preview 75",
+    "build:release": "node scripts/build-release.cjs"
+  },
+  "repository": { "type": "git", "url": "https://github.com/corybytheway/codex-micro-battery.git" }
+}
