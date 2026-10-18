@@ -17,5 +17,21 @@
   ],
   "actualBatteryRestored": true,
   "keymapUnchanged": true,
-  "physicalBrightnessConfirmation": false
+  "physicalBrightnessConfirmation": true,
+  "physicalObservation": {
+    "confirmedOnLocalDate": "2026-10-17",
+    "timezone": "America/Chicago",
+    "reportedBattery": 92,
+    "requestedBrightnessPercent": [
+      100,
+      100,
+      100,
+      100,
+      100,
+      52
+    ],
+    "observer": "device owner",
+    "confirmation": "Yes, the rightmost light is dimmer",
+    "scope": "One observed frame. Optical linearity and every intermediate brightness level were not measured."
+  }
 }

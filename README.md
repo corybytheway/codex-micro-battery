@@ -4,11 +4,11 @@
 
 **Six lights. One clear reading.**
 
-An unofficial macOS companion that turns a dedicated layer on your Work Louder Codex Micro into a live battery gauge.
+An unofficial macOS companion that uses six Agent lights on a dedicated Codex Micro layer to display battery charge with a proportional brightness fade.
 
 [**Download the beta**](https://github.com/corybytheway/codex-micro-battery/releases/tag/v0.1.0-beta.2) · [Install](#install) · [How the lights work](#how-the-lights-work) · [Remove it](#remove-it)
 
-> **Public beta:** the six-light order and colors were physically verified on an Apple Silicon Mac with firmware 0.6.3. Beta 1's temporary install, copied background runtime, and removal were also verified on the real device, restoring its original configuration exactly. Beta 2's proportional fade passes automated tests; physical brightness confirmation is pending. Bluetooth, Intel Macs, and white underglow still need hardware verification. White underglow is opt-in and experimental.
+> **Public beta:** beta 2's proportional brightness has been observed on a real Micro: at 92% battery, the device owner confirmed five full green lights and a visibly dimmer rightmost light, requested at 52% brightness. The order, colors, and beta 1 install/removal lifecycle were also verified on hardware. Bluetooth, Intel Macs, and white underglow still need further verification. White underglow is opt-in and experimental.
 
 ![Animated explanation of the battery gauge](docs/assets/battery-sequence.gif)
 
@@ -43,7 +43,7 @@ To inspect the proposed change without writing anything, use `node bin/micro-bat
 
 The two upper Agent lights fill first, followed by the four below. As the battery drains, **the bottom row empties right to left, then the top-right light, with top-left last**.
 
-Each light represents one sixth of the battery. The active light's brightness matches the fraction left in its sixth, from 100% down to off. Earlier lights stay full; later lights are off. There is no halfway brightness switch.
+Each light represents one sixth of the battery. The active light's brightness matches the fraction left in its sixth, from 100% down to off: 80% remaining in that segment requests 80% brightness, 20% requests 20%, and zero turns the light off. Earlier lights stay full; later lights are off. The fade uses the full brightness range rather than a fixed halfway switch.
 
 | Visible reading | Color |
 | --- | --- |
@@ -54,6 +54,7 @@ Each light represents one sixth of the battery. The active light's brightness ma
 | Battery | Display | Color |
 | --- | --- | --- |
 | 100% | Six full lights | Green |
+| 92% | Five full + one at 52% brightness | Green |
 | 80% | Four full + one at 80% brightness | Green |
 | 75% | Four full + one at 50% brightness | Green |
 | 70% | Four full + one at 20% brightness | Green |
@@ -64,9 +65,9 @@ Each light represents one sixth of the battery. The active light's brightness ma
 | 8% | One at 48% brightness | Red |
 | 0% | All off | — |
 
-The helper reads the Micro's actual battery every 15 seconds. **This is a Mac-connected gauge:** the Mac must be awake and connected to the Micro. When disconnected or asleep, the hardware may retain its last light state; it is not a standalone firmware battery meter.
+By default, the helper reads the Micro's actual battery every 15 seconds and applies the brightness for that reading. **This is a Mac-connected gauge:** the Mac must be awake and connected to the Micro. When disconnected or asleep, the hardware may retain its last light state; it is not a standalone firmware battery meter.
 
-Brightness follows each reported reading. If the Micro reports only whole battery percentages, a 1% battery change within a segment produces a six-percentage-point change in that light's brightness. LED output and perceived brightness may have their own granularity.
+The continuous fade describes the proportional brightness mapping; the helper does not animate between battery readings. If the Micro reports only whole battery percentages, a 1% battery change within a segment produces a six-percentage-point change in that light's brightness. LED output and perceived brightness may have their own granularity.
 
 ## Adjust it
 
@@ -118,10 +119,12 @@ If installation was interrupted, the local recovery journal and original keymap 
 | macOS 27.2, Node 22.9.0, Input 1.0.2 | Development hardware environment |
 | Install/service/uninstall lifecycle | Beta 1 real hardware round-trip verified; current simulated regression tests |
 | Charge thresholds, order, proportional brightness | Explicit examples + 10,001 charge-conservation/monotonicity/contiguity checks |
-| Proportional fade on hardware (beta 2) | [Firmware acknowledged 20% and 80% brightness](docs/proportional-brightness-verification.json); physical brightness confirmation pending |
+| Proportional fade on hardware (beta 2) | [Firmware acknowledged 20% and 80%; owner visually confirmed a dimmer last light at 92% battery](docs/proportional-brightness-verification.json) |
 | White underglow | Experimental; physical confirmation pending |
 | Bluetooth / Intel Mac | Code paths included; hardware verification pending |
 | Windows / Linux | Hardware service not supported in this release |
+
+The visual confirmation covers the observed 92% frame (five full lights plus one requested at 52%). It does not establish a measured optical brightness curve or verify every intermediate level. The tests verify the requested values across 10,001 battery readings.
 
 ## Privacy and implementation
 

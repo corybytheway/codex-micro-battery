@@ -12,6 +12,8 @@ Author: Cory McCabe
 
 **Old dim setting:** beta 2 uses proportional brightness throughout each light's range. Existing `dimBrightness` fields are ignored, and `--dim` reports that the old fixed step has been replaced.
 
+**Fade changes in visible steps:** the helper applies the latest battery reading every 15 seconds by default. Within one light's segment, a whole 1% battery change corresponds to six percentage points of requested brightness. It does not animate between readings, and the LEDs' visible response can differ from the requested percentage.
+
 **Six layers / no spare channels:** the installer leaves the device unchanged. Free a layer yourself in Input or remove another custom Agent-light integration before retrying. Existing populated layers are never silently reused.
 
 **Interrupted installation:** user data is under `~/Library/Application Support/Micro Battery/`. `state.json` is written before any device mutation and records the backup plus intended managed layer. A `prepared` installation with no matching layer can be cleared with Uninstall.command. If the matching layer exists, uninstall verifies it before removing it. Backups stay in `backups/`. Do not overwrite your whole current keymap with an old backup if you have made subsequent changes.
