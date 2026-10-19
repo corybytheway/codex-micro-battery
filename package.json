@@ -1,6 +1,6 @@
 {
   "name": "codex-micro-battery",
-  "version": "0.1.0-beta.5",
+  "version": "0.1.0-beta.6",
   "description": "An unofficial six-light battery gauge for the Work Louder Codex Micro.",
   "author": "Cory McCabe",
   "license": "MIT",

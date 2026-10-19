@@ -14,6 +14,11 @@ class FakeDevice {
   readKeymapBytes() {return Buffer.from(this.bytes);}
   call(method, params) {
     this.calls.push({method, params});
+    if (method === 'device.status') return this.status();
+    if (method === 'fs.readbin') {
+      const chunk=this.bytes.subarray(params.offset,params.offset+params.len);
+      return {total_size:this.bytes.length,data:chunk.toString('base64')};
+    }
     if (method === 'fs.txbegin') {this.chunks = []; return {tx: 7};}
     if (method === 'fs.writebin') {if (params.tx !== 7 || params.file !== 'keymap.json') throw new Error('Wrong transaction or file'); this.chunks.push({offset: params.offset, bytes: Buffer.from(params.data, 'base64')}); return {data_written: Buffer.from(params.data, 'base64').length};}
     if (method === 'fs.txcommit') {if (this.failCommit) throw new Error('Simulated commit failure'); this.bytes = Buffer.concat(this.chunks.sort((a, b) => a.offset - b.offset).map(chunk => chunk.bytes)); this.commits++; return null;}

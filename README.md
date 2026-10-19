@@ -6,11 +6,11 @@
 
 An unofficial macOS companion that uses six Agent lights on a dedicated Codex Micro layer to display battery charge with a proportional brightness fade.
 
-[**Download the beta**](https://github.com/corybytheway/codex-micro-battery/releases/tag/v0.1.0-beta.5) · [Install](#install) · [How the lights work](#how-the-lights-work) · [Remove it](#remove-it)
+[**Download the beta**](https://github.com/corybytheway/codex-micro-battery/releases/tag/v0.1.0-beta.6) · [Install](#install) · [How the lights work](#how-the-lights-work) · [Remove it](#remove-it)
 
-> **Beta 5 stops helper overrides of native Codex lighting:** helper underglow control is suppressed whenever a layer uses native Agent channels 0–5. New installs default to `inherit`. Battery buttons still show proportional charge, but a separate battery-colored underglow is **not supported alongside the native Codex layer** in this release. Codex can change the shared underglow while Battery is active. Beta 3/4 overrides and saved-rainbow restoration did not provide correct isolation.
+> **Beta 6 adds matching Battery lighting:** its underglow uses the same green, orange, or red as the gauge, while opaque action-key backlights stay off. Leaving Battery releases both zones back to Codex's live lighting. The six clear keys retain their continuous brightness fade.
 
-> **Hardware observations:** proportional button brightness was confirmed at 92% battery. Earlier matching green underglow at 51% did not establish correct native coexistence. With the helper paused, the owner confirmed normal task-colored lighting for a selected pinned chat and no underglow for an unpinned chat. The native-protection guard is covered by regression tests.
+> **Hardware observations:** orange underglow and dark opaque keys were confirmed on firmware 0.6.3 over Bluetooth. A working pinned chat kept its blue underglow for at least 15 seconds after returning to Codex. Proportional gauge brightness was previously confirmed at 92%. These observations are separate from the automated tests and do not establish an optical brightness curve.
 
 ![Animated explanation of the battery gauge](docs/assets/battery-sequence.gif)
 
@@ -18,18 +18,18 @@ Product imagery: [OpenAI × Work Louder](https://openai.com/supply/co-lab/work-l
 
 ## Install
 
-You need **macOS**, **Node.js 22 or newer**, **Work Louder Input**, and a battery-equipped Codex Micro running **vendor firmware 0.6.3 or later**. Start with a USB connection.
+You need **macOS**, **Node.js 22 or newer**, **Work Louder Input**, and a battery-equipped Codex Micro running **vendor firmware 0.6.3 or later**. USB and an already paired Bluetooth connection are supported; the recent lighting checks used Bluetooth.
 
 1. Install [Work Louder Input](https://worklouder.cc/input) and [Node.js](https://nodejs.org/en/download) if you do not already have them.
 2. Connect the Micro and **quit Input from its application menu**. The helper uses Input's installed HID driver; Input does not have to remain open.
-3. [Download Micro-Battery-0.1.0-beta.5.zip](https://github.com/corybytheway/codex-micro-battery/releases/download/v0.1.0-beta.5/Micro-Battery-0.1.0-beta.5.zip), unzip it, and open **Install.command**. Review the displayed profile and new layer, then press Return to install.
+3. [Download Micro-Battery-0.1.0-beta.6.zip](https://github.com/corybytheway/codex-micro-battery/releases/download/v0.1.0-beta.6/Micro-Battery-0.1.0-beta.6.zip), unzip it, and open **Install.command**. Review the displayed profile and new layer, then press Return to install.
 4. Tap the Micro's layer sensor to select the new **Battery** layer. The installer tells you its number—usually layer 3 when you already have two layers.
 
 The installer adds a new layer, saves a local backup, verifies the device readback, and enables a small login helper. Existing layers stay in place. A profile with six layers, unsupported layout, or insufficient spare channels is refused rather than overwritten.
 
-You can reopen Input afterward. You can also move or delete the downloaded folder after installation: the runtime is copied to your own `~/Library/Application Support/Micro Battery/` folder.
+Stop Micro Battery before editing layers in Input, quit Input when finished, then start Micro Battery again. This avoids two configuration clients writing to the same HID transport. You can also move or delete the downloaded folder after installation: the runtime is copied to your own `~/Library/Application Support/Micro Battery/` folder.
 
-**Upgrading from beta 1–4:** quit Input, run **Uninstall.command**, then **Install.command** from the new download. Backups are retained. The new installation defaults to inherited underglow. After upgrading from beta 3/4, select an unpinned chat and then a pinned chat once so Codex refreshes any old lighting override. Native lighting settings and reserved Agent channels are not rewritten.
+**Upgrading from beta 1–5:** quit Input, run **Uninstall.command**, then **Install.command** from the new download. Backups are retained. New installs reserve two additional spare channels and default to matching Battery lighting. Existing beta-5 state keeps its protection guard until reinstalled. Native Codex channels and saved layer-1 lighting are preserved.
 
 Prefer Terminal?
 
@@ -67,23 +67,27 @@ Each light represents one sixth of the battery. The active light's brightness ma
 | 8% | One at 48% brightness | Red |
 | 0% | All off | — |
 
-The green/orange/red rules above apply to the six battery buttons. **The underglow remains with Codex when a native Codex layer is present**, including while Battery is active. It may therefore reflect the selected task instead of battery charge. This release does not provide separate, isolated battery underglow.
+Battery's underglow uses the same color as the six-button gauge and stays at the configured brightness while the active gauge light fades with charge. The opaque action keys stay completely unlit, including when you click pinned Codex chats on the Mac. After you leave Battery, Codex resumes its own task lighting.
 
-With native Codex lighting present, the helper reads battery and validates keymap ownership every 15 seconds by default, sending a new battery-key frame only when charge changes or the device reconnects. It avoids the frequent layer polling used in beta 4. Cached battery-key states appear when you switch to Battery without needing a new ambient command. **This is a Mac-connected gauge:** the Mac must be awake and connected to the Micro. When disconnected or asleep, hardware can retain its last light state; it is not a standalone firmware meter.
+The helper checks the active layer on a 200 ms target cadence and yields while Codex is using the device connection. Successful test transitions took roughly 0.2–0.4 seconds; busy traffic or reconnection can take longer. Battery-key frames are sent only when charge changes or the device reconnects. Configuration ownership is rechecked every minute, and preferences refresh within one second.
+
+**This is a Mac-connected gauge:** the Mac must be awake and connected to the Micro. When disconnected or asleep, hardware can retain its last light state.
 
 The continuous fade describes the proportional brightness mapping; the helper does not animate between battery readings. If the Micro reports only whole battery percentages, a 1% battery change within a segment produces a six-percentage-point change in that light's brightness. LED output and perceived brightness may have their own granularity.
 
 ## Adjust it
 
-Battery buttons fade proportionally without configuration. The supported coexistence setting is:
+Battery buttons fade proportionally without configuration. Matching underglow is enabled by default, and the opaque keys stay off:
 
 ```sh
-node bin/micro-battery.cjs configure --underglow inherit
+node bin/micro-battery.cjs configure --underglow battery
 ```
 
-Open **Configure.command** for settings. The legacy `battery`, `white`, and `off` ambient modes remain experimental for standalone layouts without native Agent channels 0–5. They are **suppressed when any native Codex layer is present**, even if an older settings file requests them; status reports `underglowSuppressed: true`. No global RGB command, preview, or saved-default restoration is sent in that case. The native host retains control.
+Open **Configure.command**, or use `--brightness 50` to lower the underglow to 50%. Gauge brightness continues to represent charge independently. `inherit` releases the underglow to its host; `white` and `off` change only the underglow. The opaque keys remain off on Battery in every mode. White/off modes have automated coverage; matching orange and dark opaque keys received the physical checks.
 
-Settings are picked up within the default 15-second refresh. The former fixed `--dim` option is no longer used. Without a native Codex layer, the experimental ambient path retains its 500 ms layer-check cadence and saved-layer restoration; it has not established native-host isolation.
+Settings refresh within one second in a current installation. The former fixed `--dim` option is no longer used.
+
+**A white selection light disappears after a few seconds:** Codex briefly highlights a selected idle pinned chat, then turns that underglow off. A pinned chat that is actively working keeps its blue underglow. This native behavior was checked with the helper stopped and with Battery lighting enabled.
 
 **Why does Input say to edit this layer in ChatGPT?** The gauge uses vendor Agent-light assignments. Input recognizes those assignments and hides the layer editor, even when Codex is idle. Use this package's Configure command for the gauge, and Input for your other layers.
 
@@ -116,21 +120,21 @@ If installation was interrupted, the local recovery journal and original keymap 
 | --- | --- |
 | Apple Silicon, USB, firmware 0.6.3 | Gauge visually verified on a real Micro |
 | macOS 27.2, Node 22.9.0, Input 1.0.2 | Development hardware environment |
-| Install/service/uninstall lifecycle | Beta 1 real hardware round-trip verified; current simulated regression tests |
+| Install/service/uninstall lifecycle | Beta 6 ZIP: temporary real-device install, copied runtime, removal, exact original keymap bytes restored |
 | Charge thresholds, order, proportional brightness | Explicit examples + 10,001 charge-conservation/monotonicity/contiguity checks |
 | Proportional fade on hardware (beta 2) | [Firmware acknowledged 20% and 80%; owner visually confirmed a dimmer last light at 92% battery](docs/proportional-brightness-verification.json) |
-| Native Codex lighting protection (beta 5) | No helper ambient writes when native Agent mappings exist; tested across layer switches and pending beta 4 overrides |
-| Isolated battery-colored underglow with native Codex | Unresolved; disabled by protection guard |
-| Bluetooth / Intel Mac | Code paths included; hardware verification pending |
+| Battery underglow and opaque action keys (beta 6) | Orange underglow and fully dark opaque keys physically confirmed; native handoff checked separately |
+| HID coexistence | Waits for native RPC completion and its quiet interval before helper writes; reconnects after errors |
+| Bluetooth / Intel Mac | Bluetooth lighting checks on Apple Silicon; Intel hardware unverified |
 | Windows / Linux | Hardware service not supported in this release |
 
 The visual confirmation covers the observed 92% frame (five full lights plus one requested at 52%). It does not establish a measured optical brightness curve or verify every intermediate level. The tests verify the requested values across 10,001 battery readings.
 
 ## Privacy and implementation
 
-The runtime makes no network requests and includes no telemetry. It discards key/joystick notifications. Configuration backups and logs remain in your user Library folder; do not upload your full keymap or backups in an issue because they can contain personal shortcuts and commands.
+The runtime makes no network requests and includes no telemetry. For HID coordination it reads only CodexMicroService RPC timing entries in Codex's local logs, without retaining chat text or key events. This relies on the current Codex logging format; if the native host is running but its timing cannot be observed, the helper waits instead of writing blindly. It discards key/joystick notifications. Configuration backups and logs remain in your user Library folder; do not upload your full keymap or backups in an issue because they can contain personal shortcuts and commands.
 
-The gauge allocates six unused firmware Agent channels from 6–19. Codex's normal six channels, 0–5, are reserved. Only interface facts are implemented here: no Work Louder firmware, SDK code, HID binaries, app archives, or personal device configuration are redistributed.
+The installer reserves eight unused firmware Agent channels from 6–19: six for the gauge, one for matching underglow, and one to keep opaque keys dark. Codex's normal six channels, 0–5, are reserved. Only interface facts are implemented here: no Work Louder firmware, SDK code, HID binaries, app archives, or personal device configuration are redistributed.
 
 Read the [implementation and protocol notes](docs/implementation.md), [visual notes](docs/visuals.md), and [contributing guide](CONTRIBUTING.md). Run `npm test`; no `npm install` is needed.
 

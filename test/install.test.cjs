@@ -13,10 +13,17 @@ const {runService}=require('../lib/service.cjs');
 const {agentXml}=require('../lib/launch-agent.cjs');
 const source=path.resolve(__dirname,'..');
 function withoutNativeCodex(){const value=fixture();value.profiles[0].layers[0].layout.keymap[0].fill('KC_NONE');value.profiles[0].layers[0].layout.keymap[1].fill('KC_NONE');return value;}
+// Keep the beta-5 compatibility route covered with its original state shape.
+function installLegacy(args){
+  const value=install(args);
+  const state=JSON.parse(fs.readFileSync(args.paths.state));delete state.ambientChannel;delete state.darkKeysChannel;atomicJson(args.paths.state,state);
+  const settings=JSON.parse(fs.readFileSync(args.paths.settings));settings.underglow.mode='inherit';atomicJson(args.paths.settings,settings);
+  return value;
+}
 function setup(t){const root=fs.mkdtempSync(path.join(os.tmpdir(),'micro-battery-test-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));return {paths:pathsFor(path.join(root,'data'),path.join(root,'agents')),agent:{starts:0,stops:0,start(){this.starts++;},stop(){this.stops++;}}};}
 test('install, one real service iteration, and uninstall preserve user configuration',async t=>{
   const {paths,agent}=setup(t),original=fixture(),device=new FakeDevice(original),plan=prepare(device);
-  install({device,paths,source,plan,agent});
+  installLegacy({device,paths,source,plan,agent});
   assert.equal(agent.starts,1);assert.equal(device.commits,1);
   const state=JSON.parse(fs.readFileSync(paths.state));
   const backup=fs.readFileSync(state.backup.file);
@@ -38,30 +45,30 @@ test('stale configuration is rejected before any write',()=>{
 });
 test('failed transaction retains the exact backup and recovery journal',t=>{
   const {paths,agent}=setup(t),device=new FakeDevice(),before=device.readKeymapBytes(),plan=prepare(device);device.failCommit=true;
-  assert.throws(()=>install({device,paths,source,plan,agent}),/Simulated/);
+  assert.throws(()=>installLegacy({device,paths,source,plan,agent}),/Simulated/);
   assert.deepEqual(device.bytes,before);assert.equal(agent.starts,0);
   const state=JSON.parse(fs.readFileSync(paths.state));assert.equal(state.phase,'prepared');assert.deepEqual(fs.readFileSync(state.backup.file),before);
   device.failCommit=false;uninstall({device,paths,agent});assert.ok(!fs.existsSync(paths.state));
 });
 test('an edited managed layer is never removed and its running service is left alone',t=>{
-  const {paths,agent}=setup(t),device=new FakeDevice();install({device,paths,source,plan:prepare(device),agent});
+  const {paths,agent}=setup(t),device=new FakeDevice();installLegacy({device,paths,source,plan:prepare(device),agent});
   const live=JSON.parse(device.bytes);live.profiles[0].layers[2].name='User customized';device.bytes=Buffer.from(JSON.stringify(live));
   const before=device.readKeymapBytes();assert.throws(()=>uninstall({device,paths,agent}),/edited/);assert.equal(agent.stops,0);assert.deepEqual(device.bytes,before);
 });
 test('uninstall dry-run changes no files, configuration, or service state',t=>{
-  const {paths,agent}=setup(t),device=new FakeDevice();install({device,paths,source,plan:prepare(device),agent});
+  const {paths,agent}=setup(t),device=new FakeDevice();installLegacy({device,paths,source,plan:prepare(device),agent});
   const before=device.readKeymapBytes(),commits=device.commits;
   assert.equal(uninstall({device,paths,agent,dryRun:true}).dryRun,true);
   assert.deepEqual(device.bytes,before);assert.equal(device.commits,commits);assert.equal(agent.stops,0);assert.ok(fs.existsSync(paths.state));
 });
 test('service refuses channel collisions without pushing lighting',async t=>{
-  const {paths,agent}=setup(t),device=new FakeDevice();install({device,paths,source,plan:prepare(device),agent});
+  const {paths,agent}=setup(t),device=new FakeDevice();installLegacy({device,paths,source,plan:prepare(device),agent});
   const live=JSON.parse(device.bytes);live.profiles[0].layers[1].layout.keymap[0][0]='KV_OAI_AG06';device.bytes=Buffer.from(JSON.stringify(live));device.calls=[];
   await assert.rejects(runService(paths,{once:true,deviceFactory:()=>device,onEvent:()=>{}}),/another layer/);
   assert.ok(!device.calls.some(c=>c.method.startsWith('v.oai.')));assert.ok(!fs.existsSync(paths.lock));
 });
 test('legacy dim settings do not override proportional brightness; ambient updates stay layer-scoped',async t=>{
-  const {paths,agent}=setup(t),device=new FakeDevice();install({device,paths,source,plan:prepare(device),agent});
+  const {paths,agent}=setup(t),device=new FakeDevice();installLegacy({device,paths,source,plan:prepare(device),agent});
   const preferences=JSON.parse(fs.readFileSync(paths.settings));preferences.dimBrightness=.3;preferences.underglow.mode='white';device.statusValue.battery=80;atomicJson(paths.settings,preferences);
   const result=await runService(paths,{once:true,deviceFactory:()=>device,onEvent:()=>{}});
   assert.ok(Math.abs(result.levels[4]-.8)<1e-10);assert.equal(result.underglowRequested,false);assert.equal(result.underglowSuppressed,true);
@@ -69,7 +76,7 @@ test('legacy dim settings do not override proportional brightness; ambient updat
   device.statusValue.layer_index=1;device.calls=[];await runService(paths,{once:true,deviceFactory:()=>device,onEvent:()=>{}});assert.ok(!device.calls.some(c=>c.method==='v.oai.rgbcfg'));
 });
 test('standalone service changes ambient color and restores saved lighting without a native Codex layer',async t=>{
-  const {paths,agent}=setup(t),device=new FakeDevice();device.bytes=Buffer.from(JSON.stringify(withoutNativeCodex()));install({device,paths,source,plan:prepare(device),agent});
+  const {paths,agent}=setup(t),device=new FakeDevice();device.bytes=Buffer.from(JSON.stringify(withoutNativeCodex()));installLegacy({device,paths,source,plan:prepare(device),agent});
   const prefs=JSON.parse(fs.readFileSync(paths.settings));prefs.underglow.mode='battery';atomicJson(paths.settings,prefs);
   for(const [battery,color] of [[51,0x00ff00],[50,0xff8000],[100/3,0xff8000],[25,0xff0000]]){
     device.statusValue.battery=battery;device.calls=[];
@@ -84,7 +91,7 @@ test('standalone service changes ambient color and restores saved lighting witho
   assert.deepEqual(device.calls.find(c=>c.method==='v.oai.rgbcfg').params,{ambient:{e:3,b:.8,s:.69,m:1,c:0xffffff}});
 });
 test('continuous service handles layer switches before the 15-second refresh and restores on stop',async t=>{
-  const {paths,agent}=setup(t),device=new FakeDevice(withoutNativeCodex());install({device,paths,source,plan:prepare(device),agent});
+  const {paths,agent}=setup(t),device=new FakeDevice(withoutNativeCodex());installLegacy({device,paths,source,plan:prepare(device),agent});
   const prefs=JSON.parse(fs.readFileSync(paths.settings));prefs.underglow.mode='battery';atomicJson(paths.settings,prefs);
   device.calls=[];let checks=0,changes=0;const started=Date.now();
   device.status=()=>({...device.statusValue,layer_index:[3,3,1,1,3,3][Math.min(checks++,5)]});
@@ -99,7 +106,7 @@ test('continuous service handles layer switches before the 15-second refresh and
   assert.equal(fs.existsSync(paths.lock),false);
 });
 test('a layer change during keymap read cannot apply stale Battery underglow',async t=>{
-  const {paths,agent}=setup(t),device=new FakeDevice();install({device,paths,source,plan:prepare(device),agent});
+  const {paths,agent}=setup(t),device=new FakeDevice();installLegacy({device,paths,source,plan:prepare(device),agent});
   device.calls=[];let checks=0;
   device.status=()=>({...device.statusValue,layer_index:checks++===0?3:1});
   const result=await runService(paths,{once:true,deviceFactory:()=>device,onEvent:()=>{}});
@@ -107,7 +114,7 @@ test('a layer change during keymap read cannot apply stale Battery underglow',as
   assert.ok(!device.calls.some(call=>call.method==='v.oai.rgbcfg'));
 });
 test('native Codex protection suppresses ambient writes on every layer, including old pending overrides',async t=>{
-  const {paths,agent}=setup(t),device=new FakeDevice();install({device,paths,source,plan:prepare(device),agent});
+  const {paths,agent}=setup(t),device=new FakeDevice();installLegacy({device,paths,source,plan:prepare(device),agent});
   const prefs=JSON.parse(fs.readFileSync(paths.settings));prefs.underglow.mode='battery';atomicJson(paths.settings,prefs);
   atomicJson(paths.ambientState,{overridden:true});
   for(const layer of [3,1,3,1]){
@@ -121,7 +128,7 @@ test('native Codex protection suppresses ambient writes on every layer, includin
 });
 test('a native Codex layer in another profile also prevents global ambient writes',async t=>{
   const {paths,agent}=setup(t),value=withoutNativeCodex();value.profiles.push({...fixture().profiles[0],id:11});
-  const device=new FakeDevice(value);install({device,paths,source,plan:prepare(device),agent});
+  const device=new FakeDevice(value);installLegacy({device,paths,source,plan:prepare(device),agent});
   const prefs=JSON.parse(fs.readFileSync(paths.settings));prefs.underglow.mode='white';atomicJson(paths.settings,prefs);device.calls=[];
   const result=await runService(paths,{once:true,deviceFactory:()=>device,onEvent:()=>{}});
   assert.equal(result.underglowSuppressed,true);assert.ok(!device.calls.some(c=>c.method==='v.oai.rgbcfg'));
