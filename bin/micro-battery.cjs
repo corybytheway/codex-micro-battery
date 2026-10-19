@@ -46,7 +46,7 @@ async function main(argv = process.argv.slice(2)) {
   if (flags.version) {console.log(packageInfo.version); return;}
   const paths = pathsFor(flags['data-dir']);
   if (command === 'help') {
-    console.log(`Micro Battery ${packageInfo.version} — unofficial Codex Micro battery lights\n\nCommands:\n  install [--yes] [--profile ID] [--dry-run]\n  status\n  start | stop\n  configure [--underglow inherit|white|off] [--brightness 100]\n  uninstall [--yes] [--dry-run]\n  preview [PERCENT]\n\nBattery-light brightness follows the remaining charge in each segment.\nHardware commands require macOS, Node 22+, Work Louder Input, and a connected Micro.\nAll commands accept --data-dir PATH. Install accepts --input-app PATH.\n`); return;
+    console.log(`Micro Battery ${packageInfo.version} — unofficial Codex Micro battery lights\n\nCommands:\n  install [--yes] [--profile ID] [--dry-run]\n  status\n  start | stop\n  configure [--underglow battery|inherit|white|off] [--brightness 100]\n  uninstall [--yes] [--dry-run]\n  preview [PERCENT]\n\nBattery-light brightness follows the remaining charge in each segment.\nHardware commands require macOS, Node 22+, Work Louder Input, and a connected Micro.\nAll commands accept --data-dir PATH. Install accepts --input-app PATH.\n`); return;
   }
   if (command === 'preview') {
     const frame = batteryFrame(Number(positional[1] ?? 75));
@@ -69,7 +69,7 @@ async function main(argv = process.argv.slice(2)) {
     if (flags.dim !== undefined) throw new Error('Battery lights now fade proportionally to charge. The fixed --dim setting is no longer used.');
     delete value.dimBrightness;
     if (flags.underglow !== undefined) {
-      if (!['white', 'off', 'inherit'].includes(flags.underglow)) throw new Error('Underglow must be white, off, or inherit.');
+      if (!['battery', 'white', 'off', 'inherit'].includes(flags.underglow)) throw new Error('Underglow must be battery, white, off, or inherit.');
       value.underglow.mode = flags.underglow;
       value.underglow.color = '#FFFFFF';
     }
@@ -77,8 +77,8 @@ async function main(argv = process.argv.slice(2)) {
     if (flags.underglow === undefined && flags.brightness === undefined) {
       const prompt = readline.createInterface({input: process.stdin, output: process.stdout});
       try {
-        const mode = (await prompt.question(`Underglow: inherit, white, or off [${value.underglow.mode}]; white/off are experimental: `)).trim();
-        if (mode && !['inherit', 'white', 'off'].includes(mode)) throw new Error('Choose inherit, white, or off.');
+        const mode = (await prompt.question(`Underglow: battery, inherit, white, or off [${value.underglow.mode}]; ambient lighting is experimental: `)).trim();
+        if (mode && !['battery', 'inherit', 'white', 'off'].includes(mode)) throw new Error('Choose battery, inherit, white, or off.');
         if (mode) value.underglow.mode = mode;
       } finally {prompt.close();}
     }

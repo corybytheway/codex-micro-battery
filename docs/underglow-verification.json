@@ -1,0 +1,21 @@
+{
+  "author": "Cory McCabe",
+  "date": "2026-10-19",
+  "version": "0.1.0-beta.3",
+  "observedRuntime": "local companion updated to battery-color underglow",
+  "firmware": "0.6.3",
+  "battery": 51,
+  "requestedAmbient": {
+    "color": "#00ff00",
+    "brightness": 1
+  },
+  "firmwareAcknowledged": true,
+  "ownerPhysicalConfirmation": "Yes, it matches",
+  "confirmedScope": "Green underglow matches the green battery lights on the Battery layer.",
+  "notYetPhysicallyConfirmed": [
+    "orange underglow",
+    "red underglow",
+    "cross-layer ambient handoff"
+  ],
+  "automatedCoverage": "Shared gauge/ambient color boundaries, independent brightness, and managed-layer scoping."
+}

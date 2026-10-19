@@ -23,7 +23,7 @@ test('install, one real service iteration, and uninstall preserve user configura
   assert.deepEqual(JSON.parse(backup),original);
   assert.ok(fs.existsSync(path.join(paths.app,'bin/micro-battery.cjs')));
   const result=await runService(paths,{once:true,deviceFactory:()=>device,onEvent:()=>{}});
-  assert.equal(result.battery,75);assert.deepEqual(result.levels,[1,1,1,1,.5,0]);assert.equal(result.underglowRequested,false);
+  assert.equal(result.battery,75);assert.deepEqual(result.levels,[1,1,1,1,.5,0]);assert.equal(result.underglowRequested,true);assert.equal(result.underglowColor,"#00ff00");
   assert.ok(!fs.existsSync(paths.lock));
   const current=JSON.parse(device.bytes);current.profiles[0].layers[1].name='Changed later';device.bytes=Buffer.from(JSON.stringify(current));
   uninstall({device,paths,agent});
@@ -66,6 +66,20 @@ test('legacy dim settings do not override proportional brightness; ambient updat
   assert.ok(Math.abs(result.levels[4]-.8)<1e-10);assert.equal(result.underglowRequested,true);
   const ambient=device.calls.find(c=>c.method==='v.oai.rgbcfg');assert.deepEqual(Object.keys(ambient.params),['ambient']);
   device.statusValue.layer_index=1;device.calls=[];await runService(paths,{once:true,deviceFactory:()=>device,onEvent:()=>{}});assert.ok(!device.calls.some(c=>c.method==='v.oai.rgbcfg'));
+});
+test('running service changes ambient color with battery and skips other layers',async t=>{
+  const {paths,agent}=setup(t),device=new FakeDevice();install({device,paths,source,plan:prepare(device),agent});
+  for(const [battery,color] of [[51,0x00ff00],[50,0xff8000],[100/3,0xff8000],[25,0xff0000]]){
+    device.statusValue.battery=battery;device.calls=[];
+    const result=await runService(paths,{once:true,deviceFactory:()=>device,onEvent:()=>{}});
+    assert.equal(result.underglowColor,'#'+color.toString(16).padStart(6,'0'));
+    assert.deepEqual(device.calls.find(c=>c.method==='v.oai.rgbcfg').params,{ambient:{e:1,b:1,s:0,m:1,c:color}});
+    assert.ok(device.calls.find(c=>c.method==='v.oai.thstatus').params.every(light=>light.c===color));
+  }
+  device.statusValue.layer_index=1;device.calls=[];
+  const result=await runService(paths,{once:true,deviceFactory:()=>device,onEvent:()=>{}});
+  assert.equal(result.underglowColor,null);assert.equal(result.underglowRequested,false);
+  assert.ok(!device.calls.some(c=>c.method==='v.oai.rgbcfg'));
 });
 test('launch-agent paths are XML-escaped and use a copied stable runtime',t=>{
   const {paths}=setup(t);paths.root+='/a&b';const xml=agentXml(paths,'/a&b/node');assert.match(xml,/a&amp;b/);assert.ok(!xml.includes('/a&b/node'));assert.match(xml,/micro-battery\.cjs/);assert.match(xml,/<string>run<\/string>/);

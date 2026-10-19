@@ -22,6 +22,6 @@ Author: Cory McCabe
 
 **Login startup failed after successful device installation:** installation state and the battery layer are retained. Run Start.command again. If Node was removed or moved, install a supported Node version and rerun Start.command.
 
-**White underglow is still off:** it is experimental and disabled by default. Saved per-layer lighting and `lights.preview` did not visibly enable ambient light on the tested custom vendor layer. The beta offers an opt-in vendor ambient command, but its physical behavior and cross-layer handoff still need confirmation. Prefer `inherit` when troubleshooting.
+**Underglow is off or the wrong color:** beta 3 defaults to experimental battery-color underglow. Use `configure --underglow battery --brightness 100` to select it explicitly; settings apply within one polling interval while the Battery layer is active. Status reports the requested `underglowColor`. A vendor acknowledgment does not prove visible illumination. Saved per-layer lighting and `lights.preview` did not visibly enable ambient light in earlier tests. Matching green underglow was subsequently confirmed by the owner at 51% battery; orange/red underglow and cross-layer handoff still need confirmation. Use `configure --underglow inherit` to return control to the vendor host while troubleshooting.
 
 When reporting an issue, include macOS, Node, Input and firmware versions, USB/Bluetooth transport, and what the lights visibly did. Exclude serial numbers, full backups, personal keymaps, and private shortcut commands.

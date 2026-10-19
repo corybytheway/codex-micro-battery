@@ -68,3 +68,14 @@ test('ambient writes are limited to the managed active layer and never contain k
   assert.equal(ambientUpdate({profile_index:1,layer_index:3}, position, {...preferences, mode:'off'}).ambient.b, 0);
   assert.throws(() => ambientUpdate({profile_index:1,layer_index:3}, position, {...preferences,brightness:2}));
 });
+test('battery underglow shares the exact gauge color thresholds and independent brightness', () => {
+  const position = {profile: 1, layer: 3};
+  const preferences = {mode: 'battery', color: '#FFFFFF', brightness: .7};
+  for (const [battery, color] of [[100, 0x00ff00], [50.001, 0x00ff00], [50, 0xff8000], [100/3, 0xff8000], [25.001, 0xff8000], [25, 0xff0000], [0, 0xff0000]]) {
+    const status = {profile_index: 1, layer_index: 3, battery};
+    assert.deepEqual(ambientUpdate(status, position, preferences), {ambient: {e: 1, b: .7, s: 0, m: 1, c: color}});
+    assert.equal(ambientUpdate({...status, layer_index: 2}, position, preferences), null);
+    assert.equal(ambientUpdate({...status, profile_index: 0}, position, preferences), null);
+  }
+  assert.equal(ambientUpdate({profile_index: 1, layer_index: 3, battery: 80}, position, {...preferences, brightness: 0}).ambient.e, 0);
+});
