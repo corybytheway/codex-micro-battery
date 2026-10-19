@@ -12,7 +12,7 @@ Author: Cory McCabe
 
 **Old dim setting:** beta 2 uses proportional brightness throughout each light's range. Existing `dimBrightness` fields are ignored, and `--dim` reports that the old fixed step has been replaced.
 
-**Fade changes in visible steps:** the helper checks status about every half second and updates brightness when the reported battery changes. Within one light's segment, a whole 1% battery change corresponds to six percentage points of requested brightness. It does not animate between readings, and the LEDs' visible response can differ from the requested percentage.
+**Fade changes in visible steps:** with native Codex lighting present, the helper reads battery every 15 seconds by default and updates changed readings. Within one light's segment, a whole 1% battery change corresponds to six percentage points of requested brightness. It does not animate between readings, and the LEDs' visible response can differ from the requested percentage.
 
 **Six layers / no spare channels:** the installer leaves the device unchanged. Free a layer yourself in Input or remove another custom Agent-light integration before retrying. Existing populated layers are never silently reused.
 
@@ -22,8 +22,10 @@ Author: Cory McCabe
 
 **Login startup failed after successful device installation:** installation state and the battery layer are retained. Run Start.command again. If Node was removed or moved, install a supported Node version and rerun Start.command.
 
-**Underglow is off or the wrong color:** beta 3 defaults to experimental battery-color underglow. Use `configure --underglow battery --brightness 100` to select it explicitly; settings apply within the default 15-second settings refresh, or on a layer change while the Battery layer is active. Status reports the requested `underglowColor`. A vendor acknowledgment does not prove visible illumination. Saved per-layer lighting and `lights.preview` did not visibly enable ambient light in earlier tests. Matching green underglow was subsequently confirmed by the owner at 51% battery; orange/red underglow and cross-layer handoff still need confirmation. Use `configure --underglow inherit` to return control to the vendor host while troubleshooting.
+**Underglow is off or follows a Codex task:** beta 5 defaults to `inherit` and suppresses helper ambient overrides when native Agent channels 0–5 exist. That protects live task lighting. Separate battery-colored underglow is unresolved with the native Codex layer, even if an older preference requests it. Check `underglowSuppressed` in Status.command. The earlier ambient-sync and generic preview tests did not establish a working handoff.
 
 When reporting an issue, include macOS, Node, Input and firmware versions, USB/Bluetooth transport, and what the lights visibly did. Exclude serial numbers, full backups, personal keymaps, and private shortcut commands.
 
-**Battery underglow follows you to another layer / slow entry:** this was a beta 3 bug. Upgrade to beta 4 for a 500 ms layer-check cadence and explicit restoration of the selected layer’s saved underglow. Stop/Start reconnects the helper; inspect Status.command for communication errors if delays continue. Restoration needs a connected, responsive device. If native lighting changes again after restoration, its own host controls those later updates.
+**Upgrading from beta 3/4 ambient overrides:** upgrade to beta 5, which avoids global ambient writes and saved-rainbow restoration whenever native Codex Agent mappings exist. After installing, select an unpinned chat and then a pinned chat so Codex refreshes any old override. Native Codex mode uses the default 15-second battery polling interval; no underglow handoff latency is promised because isolated ambient control is disabled.
+
+**Battery underglow changes when you select a Codex task:** the layers currently share the vendor ambient state. Beta 5 protects native lighting by suppressing helper ambient writes when reserved native Agent mappings exist. The six-button gauge continues working, but isolated battery-colored underglow remains unsupported. After beta 3/4, select an unpinned chat and then a pinned chat to make Codex refresh its native colors. Do not select a fixed rainbow as a substitute for live task lighting.

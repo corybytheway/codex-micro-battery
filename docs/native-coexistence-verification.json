@@ -1,0 +1,19 @@
+{
+  "author": "Cory McCabe",
+  "date": "2026-10-19",
+  "version": "0.1.0-beta.5",
+  "firmware": "0.6.3",
+  "ownerObservations": {
+    "beta4Handoff": "About 3 seconds, with saved rainbow replacing live Codex task lighting.",
+    "nativeBaselineWithHelperPaused": "Selected pinned working task shows blue; the unpinned active chat has no underglow.",
+    "ambientSyncTest": "Battery orange carried into layer 1.",
+    "genericPreviewNumericEffects": "Acknowledged, no visible battery underglow.",
+    "genericPreviewStringEffects": "Acknowledged, no visible battery underglow.",
+    "nativeTaskChangesWhileBatteryActive": "Task selection changed the underglow even on Battery."
+  },
+  "protection": "When native Agent mappings exist, send no global RGB command, preview, or saved-default restore. Continue only spare-channel battery frames with sync flags zero.",
+  "physicalConfirmationAfterProtection": false,
+  "limitation": "Isolated battery-colored underglow with native Codex remains unresolved.",
+  "ownerObservationAfterProtection": "Battery buttons remain visible on layer 2. Selecting a pinned task changes the underglow for about three seconds, then it goes off. Independent underglow isolation is still not achieved.",
+  "batteryButtonsConfirmedAfterProtection": true
+}

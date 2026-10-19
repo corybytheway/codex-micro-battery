@@ -46,7 +46,7 @@ async function main(argv = process.argv.slice(2)) {
   if (flags.version) {console.log(packageInfo.version); return;}
   const paths = pathsFor(flags['data-dir']);
   if (command === 'help') {
-    console.log(`Micro Battery ${packageInfo.version} — unofficial Codex Micro battery lights\n\nCommands:\n  install [--yes] [--profile ID] [--dry-run]\n  status\n  start | stop\n  configure [--underglow battery|inherit|white|off] [--brightness 100]\n  uninstall [--yes] [--dry-run]\n  preview [PERCENT]\n\nBattery-light brightness follows the remaining charge in each segment.\nHardware commands require macOS, Node 22+, Work Louder Input, and a connected Micro.\nAll commands accept --data-dir PATH. Install accepts --input-app PATH.\n`); return;
+    console.log(`Micro Battery ${packageInfo.version} — unofficial Codex Micro battery lights\n\nCommands:\n  install [--yes] [--profile ID] [--dry-run]\n  status\n  start | stop\n  configure [--underglow battery|inherit|white|off] [--brightness 100]\n  uninstall [--yes] [--dry-run]\n  preview [PERCENT]\n\nBattery-light brightness follows the remaining charge in each segment.\nNative Codex Agent mappings suppress helper underglow overrides.\nHardware commands require macOS, Node 22+, Work Louder Input, and a connected Micro.\nAll commands accept --data-dir PATH. Install accepts --input-app PATH.\n`); return;
   }
   if (command === 'preview') {
     const frame = batteryFrame(Number(positional[1] ?? 75));
@@ -83,7 +83,7 @@ async function main(argv = process.argv.slice(2)) {
       } finally {prompt.close();}
     }
     atomicJson(paths.settings, value);
-    console.log('Settings saved. The running helper picks them up within 15 seconds. Underglow support is experimental.'); return;
+    console.log('Settings saved. The running helper picks them up within 15 seconds. Native Codex layers suppress helper underglow overrides. Standalone underglow remains experimental.'); return;
   }
   if (!['install', 'uninstall'].includes(command)) throw new Error('Unknown command: ' + command);
   if (!flags['dry-run']) requireInputClosed();
@@ -100,7 +100,7 @@ async function main(argv = process.argv.slice(2)) {
       if (prompt && /^n(o)?$/i.test((await prompt.question('Install and enable login startup? [Y/n]: ')).trim())) return;
       const source = path.resolve(__dirname, '..');
       install({device, paths, source, plan, agent, inputApp: flags['input-app']});
-      console.log(`Installed. Tap the Micro’s layer sensor until layer ${plan.layerNumber}.\nLayer and battery checks run about every half second while connected to this awake Mac.\nReopen Input when you want to configure your other layers.\nData and backups: ${paths.root}\n`);
+      console.log(`Installed. Tap the Micro’s layer sensor until layer ${plan.layerNumber}.\nBattery readings refresh every 15 seconds with native Codex lighting present.\nReopen Input when you want to configure your other layers.\nData and backups: ${paths.root}\n`);
     } else {
       if (prompt && !/^y(es)?$/i.test((await prompt.question('Remove only Micro Battery’s managed layer and stop its helper? [y/N]: ')).trim())) return;
       uninstall({device, paths, agent, dryRun: !!flags['dry-run']});
