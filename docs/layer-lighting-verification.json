@@ -1,0 +1,54 @@
+{
+  "author": "Cory McCabe",
+  "date": "2026-10-19",
+  "firmware": "0.6.3",
+  "platform": "macOS 27.2, Apple Silicon",
+  "transport": "Bluetooth",
+  "physicalObservations": [
+    "Battery underglow remained orange while selected pinned chats changed in Codex.",
+    "After returning from Battery, a pinned chat actively working retained blue underglow for at least 15 seconds.",
+    "With the helper completely stopped, a working chat retained blue for ten seconds.",
+    "Read-only polling retained working blue; an idle pinned chat showed a brief white selection light then turned off.",
+    "Earlier cooperative handoff build passed an approximately one-minute Battery/layer-1 use check: both stayed correct.",
+    "Revised runtime: underglow stayed orange and opaque action keys stayed completely dark while pinned Codex chats changed on the Mac.",
+    "With the revised dark-key runtime, returning to layer 1 restored the working chat blue button and blue underglow promptly and kept both correct for 15 seconds."
+  ],
+  "boundedProtocolTrial": {
+    "successfulStatusPolls": 1130,
+    "nativeCommandStarts": 65,
+    "nativeCommandCompletions": 66,
+    "nativeParsingErrorsObserved": 0,
+    "batteryEntryObservedMs": [
+      203,
+      318
+    ],
+    "nativeExitObservedMs": [
+      333,
+      422
+    ],
+    "variant": "Earlier combined ambient/key-color prototype; final dark-key variant has separate physical observations above."
+  },
+  "implementation": {
+    "gaugeChannels": "six unused channels in 6-19",
+    "matchingChannel": "one unused channel for underglow, one unused off-state channel for opaque action keys",
+    "nativeChannelsWritten": [],
+    "exit": "clear own sk/sa flags on both channels, then empty v.oai.rgbcfg to reapply firmware native cache"
+  },
+  "limits": [
+    "Physical checks establish the observed colors and handoffs, not an optical brightness curve.",
+    "The native logging format is a current coordination dependency.",
+    "Polling and log-based yielding do not create an exclusive transport lock.",
+    "Busy RPC traffic or connection recovery can delay switching.",
+    "White and off matching modes have automated coverage; matching orange and dark opaque keys received the physical checks."
+  ],
+  "packageLifecycle": {
+    "date": "2026-10-19",
+    "transport": "Bluetooth",
+    "temporaryLayerInstalledAndReadBack": true,
+    "copiedRuntimeExecuted": true,
+    "temporaryLayerRemoved": true,
+    "originalKeymapBytesRestoredExactly": true,
+    "previousHelperRestarted": true,
+    "note": "Verified from a built beta 6 ZIP with a temporary layer. Later documentation updates and the pre-write recovery guard have separate automated validation."
+  }
+}

@@ -46,7 +46,7 @@ async function main(argv = process.argv.slice(2)) {
   if (flags.version) {console.log(packageInfo.version); return;}
   const paths = pathsFor(flags['data-dir']);
   if (command === 'help') {
-    console.log(`Micro Battery ${packageInfo.version} — unofficial Codex Micro battery lights\n\nCommands:\n  install [--yes] [--profile ID] [--dry-run]\n  status\n  start | stop\n  configure [--underglow battery|inherit|white|off] [--brightness 100]\n  uninstall [--yes] [--dry-run]\n  preview [PERCENT]\n\nBattery-light brightness follows the remaining charge in each segment.\nNative Codex Agent mappings suppress helper underglow overrides.\nHardware commands require macOS, Node 22+, Work Louder Input, and a connected Micro.\nAll commands accept --data-dir PATH. Install accepts --input-app PATH.\n`); return;
+    console.log(`Micro Battery ${packageInfo.version} — unofficial Codex Micro battery lights\n\nCommands:\n  install [--yes] [--profile ID] [--dry-run]\n  status\n  start | stop\n  configure [--underglow battery|inherit|white|off] [--brightness 100]\n  uninstall [--yes] [--dry-run]\n  preview [PERCENT]\n\nBattery-light brightness follows the remaining charge in each segment.\nNew installations match Battery's underglow to its color and keep opaque action keys off.\nHardware commands require macOS, Node 22+, Work Louder Input, and a connected Micro.\nAll commands accept --data-dir PATH. Install accepts --input-app PATH.\n`); return;
   }
   if (command === 'preview') {
     const frame = batteryFrame(Number(positional[1] ?? 75));
@@ -77,13 +77,14 @@ async function main(argv = process.argv.slice(2)) {
     if (flags.underglow === undefined && flags.brightness === undefined) {
       const prompt = readline.createInterface({input: process.stdin, output: process.stdout});
       try {
-        const mode = (await prompt.question(`Underglow: battery, inherit, white, or off [${value.underglow.mode}]; ambient lighting is experimental: `)).trim();
+        const mode = (await prompt.question(`Battery underglow: battery, inherit, white, or off [${value.underglow.mode}]: `)).trim();
         if (mode && !['battery', 'inherit', 'white', 'off'].includes(mode)) throw new Error('Choose battery, inherit, white, or off.');
         if (mode) value.underglow.mode = mode;
       } finally {prompt.close();}
     }
     atomicJson(paths.settings, value);
-    console.log('Settings saved. The running helper picks them up within 15 seconds. Native Codex layers suppress helper underglow overrides. Standalone underglow remains experimental.'); return;
+    const state = JSON.parse(fs.readFileSync(paths.state));
+    console.log(state.ambientChannel === undefined ? 'Settings saved. This older installation still uses beta-5 native-lighting protection; reinstall the current package to enable matching layer lighting.' : 'Settings saved. The running helper picks them up within one second. These options affect only Battery’s underglow. Opaque action keys stay off on Battery.'); return;
   }
   if (!['install', 'uninstall'].includes(command)) throw new Error('Unknown command: ' + command);
   if (!flags['dry-run']) requireInputClosed();
@@ -95,12 +96,12 @@ async function main(argv = process.argv.slice(2)) {
       const profileId = flags.profile === undefined ? undefined : Number(flags.profile);
       if (profileId !== undefined && !Number.isInteger(profileId)) throw new Error('Profile ID must be an integer.');
       const plan = prepare(device, profileId);
-      console.log(`Add “${plan.expectedLayer.name}” as layer ${plan.layerNumber} in profile “${plan.profileName}”.\nExisting layers stay in place. A local backup is saved before the change.\nSpare light channels: ${plan.channels.join(', ')}.\n`);
+      console.log(`Add “${plan.expectedLayer.name}” as layer ${plan.layerNumber} in profile “${plan.profileName}”.\nExisting layers stay in place. A local backup is saved before the change.\nUses eight spare lighting channels; native Codex slots are preserved.\n`);
       if (flags['dry-run']) {console.log('Dry run: no files or device configuration were written.'); return;}
       if (prompt && /^n(o)?$/i.test((await prompt.question('Install and enable login startup? [Y/n]: ')).trim())) return;
       const source = path.resolve(__dirname, '..');
       install({device, paths, source, plan, agent, inputApp: flags['input-app']});
-      console.log(`Installed. Tap the Micro’s layer sensor until layer ${plan.layerNumber}.\nBattery readings refresh every 15 seconds with native Codex lighting present.\nReopen Input when you want to configure your other layers.\nData and backups: ${paths.root}\n`);
+      console.log(`Installed. Tap the Micro’s layer sensor until layer ${plan.layerNumber}.\nBattery's underglow matches its battery color; opaque action-key backlights stay off.\nStop the helper before editing other layers in Input; start it again afterward.\nData and backups: ${paths.root}\n`);
     } else {
       if (prompt && !/^y(es)?$/i.test((await prompt.question('Remove only Micro Battery’s managed layer and stop its helper? [y/N]: ')).trim())) return;
       uninstall({device, paths, agent, dryRun: !!flags['dry-run']});
