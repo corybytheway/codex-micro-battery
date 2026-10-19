@@ -20,7 +20,7 @@ try {
       const full = path.join(directory, item.name);
       if (item.isSymbolicLink()) throw new Error('Release cannot contain symlinks.');
       if (item.isDirectory()) {if (['backups', 'node_modules', '.local'].includes(item.name)) throw new Error('Private/vendor directory in release.'); audit(full);}
-      else if (/\.(?:node|asar|bin|log)$/.test(item.name) || ['state.json', 'settings.json', 'keymap.json', 'smart_actions.json', 'last-status.json', 'underglow-status.json'].includes(item.name)) throw new Error('Private or vendor artifact in release: ' + item.name);
+      else if (/\.(?:node|asar|bin|log)$/.test(item.name) || ['state.json', 'settings.json', 'keymap.json', 'smart_actions.json', 'last-status.json', 'underglow-status.json', 'ambient-state.json'].includes(item.name)) throw new Error('Private or vendor artifact in release: ' + item.name);
     }
   }
   audit(folder);

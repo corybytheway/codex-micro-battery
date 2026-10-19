@@ -6,7 +6,7 @@ function fixture() {
   native.keymap[0] = ['KV_OAI_AG00', 'KV_OAI_AG01'];
   native.keymap[1] = ['KV_OAI_AG02', 'KV_OAI_AG03', 'KV_OAI_AG04', 'KV_OAI_AG05'];
   const custom = blank(); custom.keymap[2][0] = 'KA_A0';
-  return {version: 1, activeProfileId: 0, profiles: [{id: 10, name: 'Default', layers: [{id: 0, name: 'Codex', layout: native}, {id: 8, name: 'Shortcuts', layout: custom}], macrosUsed: ['A0']}], macros: [{id: 0, name: 'Example shortcut', keys: []}], unknownFutureField: {keep: true}};
+  return {version: 1, activeProfileId: 0, profiles: [{id: 10, name: 'Default', layers: [{id: 0, name: 'Codex', layout: native, lights: {underglow: {effect: 'rainbow', brightness: .8, speed: .69, magic: 1, color: 0xffffff}}}, {id: 8, name: 'Shortcuts', layout: custom}], macrosUsed: ['A0']}], macros: [{id: 0, name: 'Example shortcut', keys: []}], unknownFutureField: {keep: true}};
 }
 class FakeDevice {
   constructor(keymap = fixture(), status = {}) {this.bytes = Buffer.from(JSON.stringify(keymap)); this.calls = []; this.commits = 0; this.statusValue = {version: '0.6.3', profile_index: 0, layer_index: 3, battery: 75, is_charging: false, ...status}; this.identity = {product: 'Test Micro'};}

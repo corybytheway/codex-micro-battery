@@ -6,9 +6,9 @@
 
 An unofficial macOS companion that uses six Agent lights on a dedicated Codex Micro layer to display battery charge with a proportional brightness fade.
 
-[**Download the beta**](https://github.com/corybytheway/codex-micro-battery/releases/tag/v0.1.0-beta.3) · [Install](#install) · [How the lights work](#how-the-lights-work) · [Remove it](#remove-it)
+[**Download the beta**](https://github.com/corybytheway/codex-micro-battery/releases/tag/v0.1.0-beta.4) · [Install](#install) · [How the lights work](#how-the-lights-work) · [Remove it](#remove-it)
 
-> **Public beta:** beta 2's proportional brightness has been observed on a real Micro: at 92% battery, the device owner confirmed five full green lights and a visibly dimmer rightmost light, requested at 52% brightness. The order, colors, and beta 1 install/removal lifecycle were also verified on hardware. Beta 3 adds underglow that follows the battery color by default. The device owner confirmed matching green underglow at a 51% battery reading. Bluetooth reliability, Intel Macs, other underglow colors, and cross-layer handoff still need further verification; underglow remains experimental.
+> **Public beta:** beta 2's proportional brightness has been observed on a real Micro: at 92% battery, the device owner confirmed five full green lights and a visibly dimmer rightmost light, requested at 52% brightness. The order, colors, and beta 1 install/removal lifecycle were also verified on hardware. Underglow follows the battery color by default. Beta 4 fixes the delayed layer response and battery underglow carrying into other layers. The device owner confirmed matching green underglow at a 51% battery reading. Bluetooth reliability, Intel Macs, other underglow colors, and the revised layer handoff need further hardware verification; underglow remains experimental.
 
 ![Animated explanation of the battery gauge](docs/assets/battery-sequence.gif)
 
@@ -20,14 +20,14 @@ You need **macOS**, **Node.js 22 or newer**, **Work Louder Input**, and a batter
 
 1. Install [Work Louder Input](https://worklouder.cc/input) and [Node.js](https://nodejs.org/en/download) if you do not already have them.
 2. Connect the Micro and **quit Input from its application menu**. The helper uses Input's installed HID driver; Input does not have to remain open.
-3. [Download Micro-Battery-0.1.0-beta.3.zip](https://github.com/corybytheway/codex-micro-battery/releases/download/v0.1.0-beta.3/Micro-Battery-0.1.0-beta.3.zip), unzip it, and open **Install.command**. Review the displayed profile and new layer, then press Return to install.
+3. [Download Micro-Battery-0.1.0-beta.4.zip](https://github.com/corybytheway/codex-micro-battery/releases/download/v0.1.0-beta.4/Micro-Battery-0.1.0-beta.4.zip), unzip it, and open **Install.command**. Review the displayed profile and new layer, then press Return to install.
 4. Tap the Micro's layer sensor to select the new **Battery** layer. The installer tells you its number—usually layer 3 when you already have two layers.
 
 The installer adds a new layer, saves a local backup, verifies the device readback, and enables a small login helper. Existing layers stay in place. A profile with six layers, unsupported layout, or insufficient spare channels is refused rather than overwritten.
 
 You can reopen Input afterward. You can also move or delete the downloaded folder after installation: the runtime is copied to your own `~/Library/Application Support/Micro Battery/` folder.
 
-**Upgrading from beta 1 or beta 2:** quit Input, run **Uninstall.command**, then **Install.command** from the new download. Backups are retained. The new installation defaults to battery-color underglow. Use Configure.command afterward if you prefer white, off, or the vendor’s usual lighting.
+**Upgrading from beta 1, beta 2, or beta 3:** quit Input, run **Uninstall.command**, then **Install.command** from the new download. Backups are retained. The new installation defaults to battery-color underglow. Use Configure.command afterward if you prefer white, off, or the vendor’s usual lighting.
 
 Prefer Terminal?
 
@@ -65,9 +65,9 @@ Each light represents one sixth of the battery. The active light's brightness ma
 | 8% | One at 48% brightness | Red |
 | 0% | All off | — |
 
-The underglow follows the same green, orange, or red color while the Battery layer is active. Two full lights remain orange; one full light plus a second at half brightness or less turns both the gauge and underglow red. Underglow brightness is independent of the fading button and defaults to 100%. At an empty reading, all six buttons are off and the requested underglow remains red. The owner has physically confirmed matching green underglow at 51%; orange/red underglow and cross-layer handoff remain experimental.
+The underglow follows the same green, orange, or red color while the Battery layer is active. Two full lights remain orange; one full light plus a second at half brightness or less turns both the gauge and underglow red. Underglow brightness is independent of the fading button and defaults to 100%. At an empty reading, all six buttons are off and the requested underglow remains red. The owner has physically confirmed matching green underglow at 51%. Beta 4 restores the newly selected layer’s saved underglow when leaving Battery, then yields to its usual host. Orange/red underglow and the revised cross-layer handoff remain experimental.
 
-By default, the helper reads the Micro's actual battery every 15 seconds and applies the brightness for that reading. **This is a Mac-connected gauge:** the Mac must be awake and connected to the Micro. When disconnected or asleep, the hardware may retain its last light state; it is not a standalone firmware battery meter.
+The helper checks the current layer and battery about every 500 ms. It sends a new battery-light frame only when the reading changes or the device reconnects. Layer switches trigger a fresh keymap read and an ambient update: Battery gets its current color, and leaving Battery restores the destination layer’s saved effect, brightness, speed, magic, and color. Device communication, competing host writes, and reconnection can add latency; this is a host-driven handoff, not an instant firmware rule. **This is a Mac-connected gauge:** the Mac must be awake and connected to the Micro. When disconnected or asleep, the hardware may retain its last light state; it is not a standalone firmware battery meter.
 
 The continuous fade describes the proportional brightness mapping; the helper does not animate between battery readings. If the Micro reports only whole battery percentages, a 1% battery change within a segment produces a six-percentage-point change in that light's brightness. LED output and perceived brightness may have their own granularity.
 
@@ -89,7 +89,7 @@ node bin/micro-battery.cjs configure --underglow off
 node bin/micro-battery.cjs configure --underglow inherit
 ```
 
-Settings are picked up within one polling interval. The former fixed `--dim` option is no longer used. All underglow overrides use a vendor ambient-light path whose visual behavior is still being tested. `battery` is the default for new beta 3 installs; existing settings retain their chosen mode until reconfigured or reinstalled. Normal Codex lighting resumes according to the Codex host's own refresh behavior when you leave the Battery layer.
+Settings and keymap ownership are refreshed every 15 seconds by default, and on layer changes. The former fixed `--dim` option is no longer used. All underglow overrides use a vendor ambient-light path whose visual behavior is still being tested. `battery` is the default for new beta 3 or later installs; existing settings retain their chosen mode until reconfigured or reinstalled. Leaving Battery restores the destination layer’s saved underglow once; subsequent native Codex lighting updates are left alone. A graceful stop also restores the active layer’s saved underglow. A small local journal records outstanding overrides for recovery after restart.
 
 **Why does Input say to edit this layer in ChatGPT?** The gauge uses vendor Agent-light assignments. Input recognizes those assignments and hides the layer editor, even when Codex is idle. Use this package's Configure command for the gauge, and Input for your other layers.
 
@@ -125,7 +125,7 @@ If installation was interrupted, the local recovery journal and original keymap 
 | Install/service/uninstall lifecycle | Beta 1 real hardware round-trip verified; current simulated regression tests |
 | Charge thresholds, order, proportional brightness | Explicit examples + 10,001 charge-conservation/monotonicity/contiguity checks |
 | Proportional fade on hardware (beta 2) | [Firmware acknowledged 20% and 80%; owner visually confirmed a dimmer last light at 92% battery](docs/proportional-brightness-verification.json) |
-| Battery-color underglow (beta 3) | [Owner confirmed green matches at 51%; other colors and cross-layer handoff pending](docs/underglow-verification.json) |
+| Battery-color underglow | [Owner confirmed green matches at 51%](docs/underglow-verification.json); beta 4 adds automatic restoration and faster layer checks |
 | Bluetooth / Intel Mac | Code paths included; hardware verification pending |
 | Windows / Linux | Hardware service not supported in this release |
 

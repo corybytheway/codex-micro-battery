@@ -65,7 +65,7 @@ test('legacy dim settings do not override proportional brightness; ambient updat
   const result=await runService(paths,{once:true,deviceFactory:()=>device,onEvent:()=>{}});
   assert.ok(Math.abs(result.levels[4]-.8)<1e-10);assert.equal(result.underglowRequested,true);
   const ambient=device.calls.find(c=>c.method==='v.oai.rgbcfg');assert.deepEqual(Object.keys(ambient.params),['ambient']);
-  device.statusValue.layer_index=1;device.calls=[];await runService(paths,{once:true,deviceFactory:()=>device,onEvent:()=>{}});assert.ok(!device.calls.some(c=>c.method==='v.oai.rgbcfg'));
+  device.statusValue.layer_index=1;device.calls=[];const restored=await runService(paths,{once:true,deviceFactory:()=>device,onEvent:()=>{}});assert.equal(restored.underglowAction,'restore');assert.equal(device.calls.find(c=>c.method==='v.oai.rgbcfg').params.ambient.e,3);
 });
 test('running service changes ambient color with battery and skips other layers',async t=>{
   const {paths,agent}=setup(t),device=new FakeDevice();install({device,paths,source,plan:prepare(device),agent});
@@ -78,8 +78,30 @@ test('running service changes ambient color with battery and skips other layers'
   }
   device.statusValue.layer_index=1;device.calls=[];
   const result=await runService(paths,{once:true,deviceFactory:()=>device,onEvent:()=>{}});
-  assert.equal(result.underglowColor,null);assert.equal(result.underglowRequested,false);
-  assert.ok(!device.calls.some(c=>c.method==='v.oai.rgbcfg'));
+  assert.equal(result.underglowColor,'#ffffff');assert.equal(result.underglowRequested,false);assert.equal(result.underglowAction,'restore');
+  assert.deepEqual(device.calls.find(c=>c.method==='v.oai.rgbcfg').params,{ambient:{e:3,b:.8,s:.69,m:1,c:0xffffff}});
+});
+test('continuous service handles layer switches before the 15-second refresh and restores on stop',async t=>{
+  const {paths,agent}=setup(t),device=new FakeDevice();install({device,paths,source,plan:prepare(device),agent});
+  device.calls=[];let checks=0,changes=0;const started=Date.now();
+  device.status=()=>({...device.statusValue,layer_index:[3,3,1,1,3,3][Math.min(checks++,5)]});
+  await runService(paths,{deviceFactory:()=>device,onEvent:event=>{
+    if(event.event==='battery'&&++changes===3)process.emit('SIGTERM');
+  }});
+  assert.ok(Date.now()-started<5000,'Layer switches must not wait for the 15-second refresh.');
+  const writes=device.calls.filter(call=>call.method==='v.oai.rgbcfg').map(call=>call.params);
+  assert.deepEqual(writes.map(p=>p.ambient.e),[1,3,1,0]);
+  assert.equal(device.calls.filter(call=>call.method==='v.oai.thstatus').length,1,'Unchanged key frames should not be resent on every layer check.');
+  assert.deepEqual(JSON.parse(fs.readFileSync(paths.ambientState)),{overridden:false});
+  assert.equal(fs.existsSync(paths.lock),false);
+});
+test('a layer change during keymap read cannot apply stale Battery underglow',async t=>{
+  const {paths,agent}=setup(t),device=new FakeDevice();install({device,paths,source,plan:prepare(device),agent});
+  device.calls=[];let checks=0;
+  device.status=()=>({...device.statusValue,layer_index:checks++===0?3:1});
+  const result=await runService(paths,{once:true,deviceFactory:()=>device,onEvent:()=>{}});
+  assert.equal(result.activeLayer,1);assert.equal(result.underglowRequested,false);
+  assert.ok(!device.calls.some(call=>call.method==='v.oai.rgbcfg'));
 });
 test('launch-agent paths are XML-escaped and use a copied stable runtime',t=>{
   const {paths}=setup(t);paths.root+='/a&b';const xml=agentXml(paths,'/a&b/node');assert.match(xml,/a&amp;b/);assert.ok(!xml.includes('/a&b/node'));assert.match(xml,/micro-battery\.cjs/);assert.match(xml,/<string>run<\/string>/);

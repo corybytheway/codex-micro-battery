@@ -100,7 +100,7 @@ async function main(argv = process.argv.slice(2)) {
       if (prompt && /^n(o)?$/i.test((await prompt.question('Install and enable login startup? [Y/n]: ')).trim())) return;
       const source = path.resolve(__dirname, '..');
       install({device, paths, source, plan, agent, inputApp: flags['input-app']});
-      console.log(`Installed. Tap the Micro’s layer sensor until layer ${plan.layerNumber}.\nThe gauge updates every 15 seconds while connected to this awake Mac.\nReopen Input when you want to configure your other layers.\nData and backups: ${paths.root}\n`);
+      console.log(`Installed. Tap the Micro’s layer sensor until layer ${plan.layerNumber}.\nLayer and battery checks run about every half second while connected to this awake Mac.\nReopen Input when you want to configure your other layers.\nData and backups: ${paths.root}\n`);
     } else {
       if (prompt && !/^y(es)?$/i.test((await prompt.question('Remove only Micro Battery’s managed layer and stop its helper? [y/N]: ')).trim())) return;
       uninstall({device, paths, agent, dryRun: !!flags['dry-run']});
