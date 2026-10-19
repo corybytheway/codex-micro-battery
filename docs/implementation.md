@@ -34,3 +34,7 @@ These sources describe interface behavior, sometimes on different firmware versi
 The runtime now checks status on a 500 ms cadence, with one RPC in flight and fewer repeated writes. It reloads the keymap on a layer/profile transition, validates the managed layer, and restores the active destination layer’s saved underglow effect and parameters when it releases a Battery override. Only the ambient zone is written. Once restored, ordinary host lighting is left alone. Changing to `inherit` or stopping gracefully also releases the override.
 
 `ambient-state.json` journals ownership before an override. A reconnect or restart can therefore release a pending override even if the service missed the transition. Failed restoration remains pending; unrecognized saved lighting is refused instead of replaced with an assumed color. Status includes `underglowAction` (`apply`, `restore`, or `unchanged`). The 500 ms cadence is a target between successful calls, not a guarantee while USB/Bluetooth communication is blocked.
+
+## Owner follow-up after beta 4
+
+Physical testing found roughly 3-second switching delay and restoration of a rainbow effect on layer 1 instead of live Codex task lighting. The task keypad and underglow returned to blue after selecting an active task with the helper paused. Restoring saved keymap lighting is not a correct release strategy for a host-controlled layer. The published saved-layer tests therefore do not establish native Codex coexistence. Further experiments must preserve live host lighting, not substitute Input defaults.
